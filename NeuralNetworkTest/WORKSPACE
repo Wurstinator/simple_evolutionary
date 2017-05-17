@@ -1,0 +1,33 @@
+# gtest
+new_http_archive(
+  name = "gtest",
+  url = "https://github.com/google/googletest/archive/release-1.7.0.zip",
+  sha256 = "b58cb7547a28b2c718d1e38aee18a3659c9e3ff52440297e965f5edffe34b6d0",
+  build_file = "gtest.BUILD",
+  strip_prefix = "googletest-release-1.7.0",
+)
+
+# Boost
+local_repository(
+  name = "boostgen",
+  path = "./boostgen",
+)
+
+load("@boostgen//:boost/boost.bzl", "boost_deps")
+boost_deps()
+
+# Armadillo
+new_http_archive(
+ name = "armadillo",
+  url = "https://downloads.sourceforge.net/project/arma/armadillo-7.800.2.tar.xz?r=http%3A%2F%2Farma.sourceforge.net%2Fdownload.html&ts=1491821153",
+  build_file = "armadillo.BUILD",
+  strip_prefix = "armadillo-7.800.2",
+)
+
+# Snowhouse
+new_http_archive(
+  name = "snowhouse",
+  url = "https://github.com/banditcpp/snowhouse/archive/master.zip",
+  build_file = "snowhouse.BUILD",
+  strip_prefix = "snowhouse-master"
+)
