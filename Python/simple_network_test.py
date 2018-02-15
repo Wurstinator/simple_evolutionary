@@ -3,6 +3,7 @@ import unittest
 from simple_network import SimpleNetwork
 from numpy.testing import assert_array_equal
 
+
 class TestSimpleNetwork(unittest.TestCase):
     # output:  (0)       (0)        (0)
     #            (0)              (0)
