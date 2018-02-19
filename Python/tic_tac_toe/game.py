@@ -1,5 +1,5 @@
 
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 from itertools import product
 
 class Game:
@@ -14,16 +14,16 @@ class Game:
     def __init__(self):
         self.board = [[Game.Player.Non]*3]*3
 
-    def __getitem__(self, item: int) -> int:
+    def __getitem__(self, item: Tuple[int, int]) -> int:
         x, y = item
         return self.board[x][y]
 
-    def __setitem__(self, key: int, value: int):
+    def __setitem__(self, key: Tuple[int, int], value: int):
         x, y = key
         self.board[x][y] = value
 
     @staticmethod
-    def winning_combinations() -> Iterable[List[(int, int)]]:
+    def winning_combinations() -> Iterable[List[Tuple[int, int]]]:
         # Returns a list of lists of positions which determine a winning player.
         yield [(0, 0), (1, 1), (2, 2)]
         yield [(2, 0), (1, 1), (0, 2)]
@@ -35,7 +35,7 @@ class Game:
         yield [(0, 2), (1, 2), (2, 2)]
 
     @staticmethod
-    def all_tiles() -> Iterable[(int,int)]:
+    def all_tiles() -> Iterable[Tuple[int, int]]:
         # Returns a list of all 9 positions.
         return product(range(3), repeat=2)
 
@@ -62,7 +62,7 @@ class Game:
         # Returns the number of turns passed so far, i.e. the number of tiles that are not free.
         return 9 - sum(map(lambda x: 1, self.free_moves()))
 
-    def free_moves(self) -> Iterable[(int, int)]:
+    def free_moves(self) -> Iterable[Tuple[int, int]]:
         # Returns a list of tiles that are still free.
         def free(pos):
             return self[pos] == Game.Player.Non
