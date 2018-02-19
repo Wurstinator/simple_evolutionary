@@ -1,5 +1,5 @@
 
-from typing import Generic, TypeVar
+from typing import Generic, TypeVar, List
 from abc import ABC
 
 T = TypeVar('T')
@@ -12,8 +12,8 @@ class Evolver(ABC, Generic[T]):
         # Creates a random specimen for the first generation.
         pass
 
-    def mate(self, father: T, mother: T) -> T:
-        # Combines two specimen to a single one.
+    def mate(self, parents: List[T]) -> T:
+        # Combines multiple specimen to a single one.
         pass
 
     def mutate(self, specimen: T) -> T:

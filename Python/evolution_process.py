@@ -1,5 +1,8 @@
-from typing import Generic, TypeVar, List, Callable
+from typing import Generic, TypeVar, List, Callable, Mapping
 from evolver import Evolver
+from itertools import product
+from multiprocessing import Process, Queue, Pool
+from functools import partial
 
 T = TypeVar('T')
 
@@ -17,6 +20,7 @@ class EvolutionProcessOptions(Generic[T]):
                  natural_selection_strategy: int = 0,
                  generation_size: int = 0,
                  starting_generation: List[T] = [],
+                 parent_count: int = 1,
                  offspring_count: int = 0,
                  terminate_condition: Callable[[List[T]], bool] = (lambda x: True)):
         # Defines the strategy which defines which specimen to keep in each generation.
@@ -25,6 +29,8 @@ class EvolutionProcessOptions(Generic[T]):
         self.generation_size = generation_size
         # A sample of specimen for the first generation. The remaining spots will be filled by the evolver object.
         self.starting_generation = starting_generation
+        # Number of specimen that are used to mate for a new generation.
+        self.parent_count = parent_count
         # Number of children for each pair of parents.
         self.offspring_count = offspring_count
         # Callable that defines at which generation to stop. Is called exactly once before a mating step.
@@ -65,10 +71,12 @@ def _initial_generation(evolver: Evolver[T], options: EvolutionProcessOptions[T]
 
 
 def _evolve(generation: List[T], evolver: Evolver[T], options: EvolutionProcessOptions[T]) -> List[T]:
-    # Mate all specimen with each other.
-    offspring = [evolver.mate(x, y) for x in generation for y in generation for _ in range(options.offspring_count)]
-    # Mutate all specimen in the new generation.
-    return [evolver.mutate(x) for x in offspring]
+    # Mate all specimen with each other and mutate the children.
+    def mate_and_mutate(p: List[T]) -> List[T]:
+        for _ in range(options.offspring_count):
+            return evolver.mutate(evolver.mate(p))
+
+    return list(map(mate_and_mutate, product(generation, repeat=options.parent_count)))
 
 
 def _natural_selection(generation: List[T], options: EvolutionProcessOptions[T],
@@ -80,4 +88,8 @@ def _natural_selection(generation: List[T], options: EvolutionProcessOptions[T],
 
 def _natural_selection_kill_precise_worst(generation: List[T], fitness_function: Callable[[T], float],
                                           n: int) -> List[T]:
-    return sorted(generation, key=fitness_function)[-n:]
+    scores = _fitness_function(generation, fitness_function)
+    return sorted(generation, key=(lambda x: scores[x]))[-n:]
+
+def _fitness_function(generation: List[T], fitness_function: Callable[[T], float]) -> Mapping[T, float]:
+    return {x: fitness_function(x) for x in generation}

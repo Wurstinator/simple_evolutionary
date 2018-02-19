@@ -14,8 +14,8 @@ class TestEvolutionProcess(unittest.TestCase):
             self.i += 1
             return self.i
 
-        def mate(self, father: int, mother: int) -> int:
-            return father + mother
+        def mate(self, parents: List[int]) -> int:
+            return sum(parents)
 
         def mutate(self, specimen: int) -> int:
             return specimen-1
@@ -31,6 +31,7 @@ class TestEvolutionProcess(unittest.TestCase):
             natural_selection_strategy=EvolutionProcessOptions.NaturalSelectionStrategy.KILL_PRECISE_WORST,
             generation_size=3,
             starting_generation=[],
+            parent_count=2,
             offspring_count=2,
             terminate_condition=terminate_after_n_generations(2, register_generation)
         )
@@ -48,8 +49,8 @@ class TestEvolutionProcess(unittest.TestCase):
         self.assertEqual(generations_log[0][1], 2)
         self.assertEqual(generations_log[0][2], 3)
         self.assertEqual(generations_log[1][0], 4)
-        self.assertEqual(generations_log[1][1], 5)
+        self.assertEqual(generations_log[1][1], 4)
         self.assertEqual(generations_log[1][2], 5)
-        self.assertEqual(final_generation[0], 9)
-        self.assertEqual(final_generation[1], 9)
+        self.assertEqual(final_generation[0], 8)
+        self.assertEqual(final_generation[1], 8)
         self.assertEqual(final_generation[2], 9)
