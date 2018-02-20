@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, List, Callable, Mapping
+from typing import Generic, TypeVar, List, Callable, Mapping, Tuple
 from evolver import Evolver
 from itertools import product
 from multiprocessing import Process, Queue, Pool
@@ -55,12 +55,31 @@ def terminate_after_n_generations(n: int, second_condition: Callable[[List[T]], 
     return Counter()
 
 
+def log_sorted_generations(log: Callable[[Mapping[T, float]], None],
+                           fitness_function: Callable[[List[T], int], float]) -> Callable[[List[T]], bool]:
+    # Helper function. If used as terminate_condition, the process will never stop but every generation is logged
+    # with a call to the passed function. The generation is also sorted by the score, which is also logged.
+    class Counter:
+        def __init__(self):
+            self.counter = 0
+
+        def __call__(self, generation: List[T]) -> bool:
+            self.counter += 1
+            scores = fitness_function(generation, self.counter)
+            log(scores)
+            return False
+
+    return Counter()
+
+
 def evolution(evolver: Evolver[T], options: EvolutionProcessOptions[T],
-              fitness_function: Callable[[T], float]) -> List[T]:
+              fitness_function: Callable[[List[T]], float]) -> List[T]:
     # Performs evolution and returns the final generation.
+    age = 0
     generation = _initial_generation(evolver, options)
     while not options.terminate_condition(generation):
-        generation = _natural_selection(_evolve(generation, evolver, options), options, fitness_function)
+        age += 1
+        generation = _natural_selection(_evolve(generation, evolver, options), age, options, fitness_function)
     return generation
 
 
@@ -73,23 +92,23 @@ def _initial_generation(evolver: Evolver[T], options: EvolutionProcessOptions[T]
 def _evolve(generation: List[T], evolver: Evolver[T], options: EvolutionProcessOptions[T]) -> List[T]:
     # Mate all specimen with each other and mutate the children.
     def mate_and_mutate(p: List[T]) -> List[T]:
-        for _ in range(options.offspring_count):
-            return evolver.mutate(evolver.mate(p))
+        return [evolver.mutate(evolver.mate(p)) for _ in range(options.offspring_count)]
 
-    return list(map(mate_and_mutate, product(generation, repeat=options.parent_count)))
+    children = list(map(mate_and_mutate, product(generation, repeat=options.parent_count)))
+    return [x for y in children for x in y]
 
 
-def _natural_selection(generation: List[T], options: EvolutionProcessOptions[T],
-                       fitness_function: Callable[[T], float]) -> List[T]:
+def _natural_selection(generation: List[T],  # list of specimen
+                       generation_age: int,  # number of the generation
+                       options: EvolutionProcessOptions[T],  # evolution options
+                       fitness_function: Callable[[List[T], int], float])  \
+        -> List[T]:
     # Use natural selection and the fitness function to keep only the strongest specimen.
+    fitness_scores = fitness_function(generation, generation_age)
     etf = { EvolutionProcessOptions.NaturalSelectionStrategy.KILL_PRECISE_WORST: _natural_selection_kill_precise_worst}
-    return etf[options.natural_selection_strategy](generation, fitness_function, options.generation_size)
+    return etf[options.natural_selection_strategy](fitness_scores, options.generation_size)
 
 
-def _natural_selection_kill_precise_worst(generation: List[T], fitness_function: Callable[[T], float],
+def _natural_selection_kill_precise_worst(scores: Mapping[T, float],
                                           n: int) -> List[T]:
-    scores = _fitness_function(generation, fitness_function)
-    return sorted(generation, key=(lambda x: scores[x]))[-n:]
-
-def _fitness_function(generation: List[T], fitness_function: Callable[[T], float]) -> Mapping[T, float]:
-    return {x: fitness_function(x) for x in generation}
+    return sorted(scores.keys(), key=(lambda x: scores[x]))[-n:]

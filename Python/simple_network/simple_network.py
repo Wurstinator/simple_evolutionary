@@ -1,6 +1,7 @@
 
-from typing import List, Callable
+from typing import List, Callable, Iterable
 import numpy
+
 
 class SimpleNetwork:
     # Network of fixed size with nodes that pass values to the next layer.
@@ -33,13 +34,22 @@ class SimpleNetwork:
         # The activation function is applied to each output of a layer.
         self.activation_function : Callable[[float], float] = (lambda x: x)
 
+    @staticmethod
+    def complete_network(layer_sizes: List[int]):
+        # Initializes a new network with the given layers. They are all fully connected but weighted 0.
+        network = SimpleNetwork(layer_sizes)
+        for e in network.all_edges():
+            network.add_connection(e, 0.0)
+        return network
+
     def layer_number(self) -> int:
         # Returns the number of layers.
         return len(self._layers) + 1
 
     def layer_size(self, layer: int) -> int:
         # Returns the number of nodes on a specific layer.
-        assert(layer < self.layer_number())
+        if __debug__:
+            assert(layer < self.layer_number())
 
         if layer + 1 == self.layer_number():
             return self._layers[-1].connections.shape[1]
@@ -48,13 +58,15 @@ class SimpleNetwork:
 
     def has_connection(self, edge: Edge) -> bool:
         # Returns whether a specific edge exists in the network.
-        self.assert_edge_valid(edge)
+        if __debug__:
+            self.assert_edge_valid(edge)
         layer = self._layers[edge.nfrom.layer]
         return layer.connections[edge.nfrom.index, edge.nto.index] != 0
 
     def connection_weight(self, edge: Edge) -> float:
         # Returns the weight of an edge in the network. If the edge does not exist, the result is undefined.
-        self.assert_edge_valid(edge)
+        if __debug__:
+            self.assert_edge_valid(edge)
         layer = self._layers[edge.nfrom.layer]
         return layer.weights[edge.nfrom.index, edge.nto.index]
 
@@ -62,7 +74,8 @@ class SimpleNetwork:
         # Tries to add an edge to the network. If the edge is already present and the weight parameters is not set,
         # nothing is done. If the weight parameter is set, then the edge weight is updated. If the edge is not present,
         # it is added with the specified weight, or 0 by default.
-        self.assert_edge_valid(edge)
+        if __debug__:
+            self.assert_edge_valid(edge)
         if w is not None:
             self._add_connection(edge, w)
         elif not self.has_connection(edge):
@@ -76,7 +89,8 @@ class SimpleNetwork:
 
     def remove_connection(self, edge: Edge):
         # Removes a given edge from the network, if it exists.
-        self.assert_edge_valid(edge)
+        if __debug__:
+            self.assert_edge_valid(edge)
         layer = self._layers[edge.nfrom.layer]
         layer.connections[edge.nfrom.index, edge.nto.index] = 0
 
@@ -89,6 +103,13 @@ class SimpleNetwork:
         # Asserts whether a given edge has valid indices for this network.
         self.assert_node_valid(edge.nfrom)
         self.assert_node_valid(edge.nto)
+
+    def all_edges(self) -> Iterable[Edge]:
+        # Iterates over all possible edges in the network.
+        for l in range(self.layer_number() - 1):
+            for i in range(self.layer_size(l)):
+                for j in range(self.layer_size(l+1)):
+                    yield SimpleNetwork.Edge(l, i, j)
 
     def forward(self, input: List[float]):
         # Computes the output for a given input.

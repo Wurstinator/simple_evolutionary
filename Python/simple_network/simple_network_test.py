@@ -1,6 +1,6 @@
 
 import unittest
-from simple_network import SimpleNetwork
+from simple_network.simple_network import SimpleNetwork
 from numpy.testing import assert_array_equal
 
 

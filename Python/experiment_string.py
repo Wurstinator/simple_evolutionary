@@ -1,8 +1,8 @@
 
 from evolver import Evolver
-from evolution_process import evolution, EvolutionProcessOptions, terminate_after_n_generations
+from evolution_process import evolution, EvolutionProcessOptions, terminate_after_n_generations, log_sorted_generations
 from typing import List
-from random import choice, choices, randrange, gauss, random
+from random import choice, choices, gauss, random
 from string import ascii_letters, digits
 
 
@@ -66,15 +66,10 @@ def dist(s1, s2):
 
 def evolve_strings(target_string: str) -> List[List[str]]:
     log = []
-
-    def register_generation(generation: List[str]) -> bool:
-        log.append(generation)
-        return False
-
-    string_evolution_options.terminate_condition=terminate_after_n_generations(20, register_generation)
-    evolver = StringEvolver()
     fitness = (lambda s: dist(s, target_string))
-    log.append(evolution(evolver, string_evolution_options, fitness))
+    string_evolution_options.terminate_condition=terminate_after_n_generations(20, log_sorted_generations(log, fitness))
+    evolver = StringEvolver()
+    evolution(evolver, string_evolution_options, fitness)
     return log
 
 

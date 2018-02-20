@@ -1,6 +1,6 @@
 
 from tic_tac_toe.simple_network_support import ai_next_move
-from simple_network import SimpleNetwork
+from simple_network.simple_network import SimpleNetwork
 from tic_tac_toe.game import Game
 import unittest
 

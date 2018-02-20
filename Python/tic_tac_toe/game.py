@@ -1,26 +1,31 @@
 
 from typing import Iterable, List, Tuple
 from itertools import product
+from enum import Enum
 
 class Game:
     # Class for handling the game logic of TicTacToe.
 
-    class Player:
+    class Player(Enum):
         Non = 0
         X = 1
         O = 2
         Both = 3
 
     def __init__(self):
-        self.board = [[Game.Player.Non]*3]*3
+        self._board = [
+            [Game.Player.Non, Game.Player.Non, Game.Player.Non],
+            [Game.Player.Non, Game.Player.Non, Game.Player.Non],
+            [Game.Player.Non, Game.Player.Non, Game.Player.Non]
+        ]
 
-    def __getitem__(self, item: Tuple[int, int]) -> int:
+    def __getitem__(self, item: Tuple[int, int]) -> Player:
         x, y = item
-        return self.board[x][y]
+        return self._board[x][y]
 
-    def __setitem__(self, key: Tuple[int, int], value: int):
+    def __setitem__(self, key: Tuple[int, int], value: Player):
         x, y = key
-        self.board[x][y] = value
+        self._board[x][y] = value
 
     @staticmethod
     def winning_combinations() -> Iterable[List[Tuple[int, int]]]:
@@ -39,20 +44,25 @@ class Game:
         # Returns a list of all 9 positions.
         return product(range(3), repeat=2)
 
-    def winner(self) -> int:
+    def winner(self) -> Player:
         # Returns the Player enum corresponding to a player who has won the current game.
-        winners = {}
+        o_won = False
+        x_won = False
         for wc in Game.winning_combinations():
-            for player in [Game.Player.X, Game.Player.O]:
-                if all(self[pos] == player for pos in wc):
-                    winners.add(player)
+            if self[wc[0]] == self[wc[1]] == self[wc[2]]:
+                o_won = (o_won or self[wc[0]] == Game.Player.O)
+                x_won = (x_won or self[wc[0]] == Game.Player.X)
 
-        if winners.empty():
-            return Game.Player.Non
-        elif len(winners) == 2:
-            return Game.Player.Both
+        if o_won:
+            if x_won:
+                return Game.Player.Both
+            else:
+                return Game.Player.O
         else:
-            return winners.pop()
+            if x_won:
+                return Game.Player.X
+            else:
+                return Game.Player.Non
 
     def is_over(self) -> bool:
         # Returns whether the game is over, i.e. there is a winner of the board is full.
