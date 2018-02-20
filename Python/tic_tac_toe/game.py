@@ -3,6 +3,7 @@ from typing import Iterable, List, Tuple
 from itertools import product
 from enum import Enum
 
+
 class Game:
     # Class for handling the game logic of TicTacToe.
 

@@ -46,11 +46,13 @@ def terminate_after_n_generations(n: int, second_condition: Callable[[List[T]], 
             self.counter = 0
 
         def __call__(self, generation: List[T]) -> bool:
-            if self.counter == n:
+            if second_condition(generation):
+                return True
+            elif self.counter == n:
                 return True
             else:
                 self.counter += 1
-                return second_condition(generation)
+                return False
 
     return Counter()
 
